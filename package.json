@@ -1,0 +1,9 @@
+{
+  "name": "opencode-ops-dashboard",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node --test"
+  }
+}

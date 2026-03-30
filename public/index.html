@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCode Ops Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__logo">OC</div>
+        <div>
+          <div class="brand__title">OpenCode</div>
+          <div class="brand__subtitle">Operations Dashboard</div>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <section class="kpi-card kpi-card--running">
+          <div class="kpi-card__label">Running Agents</div>
+          <div class="kpi-card__value" id="running-agents">0</div>
+        </section>
+        <section class="kpi-card kpi-card--stalled">
+          <div class="kpi-card__label">Suspected Stalled</div>
+          <div class="kpi-card__value" id="stalled-agents">0</div>
+        </section>
+      </div>
+
+      <div class="meta-status">
+        <div class="live"><span class="live__dot"></span><span>Polling every 5s</span></div>
+        <div id="last-refreshed">Last refresh --</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel panel--projects">
+        <div class="panel__header">
+          <div>
+            <div class="panel__eyebrow">Projects</div>
+            <div class="panel__title" id="project-count">0 projects</div>
+          </div>
+        </div>
+        <div class="projects-list" id="projects-list"></div>
+      </aside>
+
+      <section class="panel panel--center">
+        <div class="sessions-main" id="sessions-main"></div>
+      </section>
+
+      <aside class="panel panel--detail" id="detail-panel">
+        <div class="panel--detail-scroll">
+          <div class="empty-state">에이전트를 선택하면 상세가 표시됩니다.</div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
