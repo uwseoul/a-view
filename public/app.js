@@ -96,7 +96,11 @@ function groupByDirectory(sessions) {
     if (!groups.has(dir)) groups.set(dir, { name: basename, directory: dir, sessions: [] })
     groups.get(dir).sessions.push(session)
   }
-  return Array.from(groups.values()).sort((a, b) => b.sessions.length - a.sessions.length)
+  return Array.from(groups.values()).sort((a, b) => {
+    const aLatest = Math.max(...a.sessions.map(s => new Date(s.lastActivityAt || 0).getTime()))
+    const bLatest = Math.max(...b.sessions.map(s => new Date(s.lastActivityAt || 0).getTime()))
+    return bLatest - aLatest
+  })
 }
 
 function renderTopBar(snapshot) {
