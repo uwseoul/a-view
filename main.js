@@ -1,6 +1,7 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, dialog } = require('electron')
 const { fork } = require('node:child_process')
 const { createServer } = require('node:net')
+const path = require('node:path')
 
 let mainWindow = null
 let serverProcess = null
@@ -41,11 +42,13 @@ function createMainWindow(port) {
 
 async function startServer() {
   const port = await findFreePort()
+  const serverPath = path.join(__dirname, 'server', 'server.js')
 
   return new Promise((resolve, reject) => {
-    serverProcess = fork(__dirname + '/server/server.js', [], {
+    serverProcess = fork(serverPath, [], {
       env: { ...process.env, PORT: String(port) },
       stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+      execArgv: ['--experimental-sqlite'],
     })
 
     let ready = false
@@ -69,7 +72,8 @@ async function startServer() {
 
     serverProcess.on('exit', (code) => {
       if (code !== 0 && code !== null) {
-        process.exit(code)
+        dialog.showErrorBox('Server Crashed', `Server process exited with code ${code}`)
+        app.quit()
       }
     })
 
@@ -88,7 +92,7 @@ app.whenReady().then(async () => {
     const port = await startServer()
     createMainWindow(port)
   } catch (err) {
-    console.error('Failed to start server:', err)
+    dialog.showErrorBox('Startup Error', err.message)
     process.exit(1)
   }
 })

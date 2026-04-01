@@ -11,11 +11,12 @@
     "electron:build": "electron-builder build"
   },
   "devDependencies": {
-    "electron": "^33.0.0",
+    "electron": "^35.0.0",
     "electron-builder": "^25.0.0"
   },
   "build": {
     "appId": "com.opencode.ops-dashboard",
+    "asar": false,
     "directories": {
       "output": "dist"
     },
