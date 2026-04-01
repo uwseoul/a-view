@@ -2,8 +2,26 @@
   "name": "opencode-ops-dashboard",
   "private": true,
   "type": "commonjs",
+  "main": "main.js",
   "scripts": {
     "start": "node server/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "electron:dev": "electron .",
+    "electron:build": "electron-builder build"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.opencode.ops-dashboard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "server/**/*",
+      "public/**/*",
+      "main.js"
+    ]
   }
 }
