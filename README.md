@@ -57,12 +57,6 @@ npm start
 - **Data source**: OpenCode SQLite DB (read-only)
 - **CI/CD**: GitHub Actions (auto build & release on tag push)
 
-## Roadmap
-
-- 웹 터미널 (xterm.js + WebSocket)
-- 원격 접속 (Tailscale / Cloudflare Tunnel)
-- 에이전트 제어 (프롬프트 전송, 모델 전환)
-
 ## License
 
 MIT
