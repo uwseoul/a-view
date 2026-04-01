@@ -20,6 +20,21 @@
 }
 
 * { box-sizing: border-box; }
+
+/* ── Scrollbar: flat & thin ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(144, 160, 189, 0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(144, 160, 189, 0.4); }
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(144, 160, 189, 0.25) transparent;
+}
 body {
   margin: 0;
   font-family: var(--sans);
@@ -259,6 +274,26 @@ body {
 .agent-card[data-status="stalled"]::before,
 .agent-card[data-status="failed"]::before { background: var(--red); }
 .agent-card[data-status="completed"]::before { background: var(--green); }
+
+.agent-card--sub {
+  background: rgba(246, 173, 85, 0.06);
+  border-color: rgba(246, 173, 85, 0.18);
+  border-radius: 14px;
+}
+.agent-card--sub::before { background: var(--amber) !important; opacity: 0.5; width: 3px; }
+.agent-card--sub .agent-card__name::after {
+  content: 'SUB';
+  margin-left: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--amber);
+  background: rgba(246, 173, 85, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+.agent-card--sub .agent-card__task { opacity: 0.75; }
 
 .agent-card__header, .detail-card__header { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
 .agent-card__name { font-size: 16px; font-weight: 700; }

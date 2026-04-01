@@ -178,10 +178,10 @@ function renderProjects(snapshot) {
   })
 }
 
-function agentCardHtml(agent, isActive) {
+function agentCardHtml(agent, isActive, isSubAgent) {
   const tools = (agent.tools || []).slice(0, 4).map(t => `<span class="tool-badge">${escapeHtml(t)}</span>`).join('')
   return `
-    <article class="agent-card ${isActive ? 'is-active' : ''}" data-status="${agent.status}" data-agent-id="${agent.id}">
+    <article class="agent-card ${isActive ? 'is-active' : ''} ${isSubAgent ? 'agent-card--sub' : ''}" data-status="${agent.status}" data-agent-id="${agent.id}">
       <div class="agent-card__header">
         <div>
           <div class="agent-card__name">${escapeHtml(agent.name)}</div>
@@ -209,13 +209,15 @@ function renderAllSessions(snapshot) {
     const allAgents = [...session.agents, ...(session.children || []).flatMap(c => c.agents)]
     const dots = allAgents.slice(0, 8).map(a => `<span class="status-dot" style="background:${statusColor(a.status)}"></span>`).join('')
 
-    const agentsHtml = session.agents.map(a => agentCardHtml(a, a.id === state.selectedAgentId)).join('')
+    const sortedAgents = [...session.agents].sort((a, b) => (a.lastEventAgeSec ?? Infinity) - (b.lastEventAgeSec ?? Infinity))
+    const agentsHtml = sortedAgents.map(a => agentCardHtml(a, a.id === state.selectedAgentId)).join('')
 
     let childrenAgentsHtml = ''
     if (session.children && session.children.length > 0) {
-      childrenAgentsHtml = session.children.flatMap(child =>
-        child.agents.map(a => agentCardHtml(a, a.id === state.selectedAgentId))
-      ).join('')
+      const sortedChildren = session.children.flatMap(child =>
+        [...child.agents].sort((a, b) => (a.lastEventAgeSec ?? Infinity) - (b.lastEventAgeSec ?? Infinity))
+      )
+      childrenAgentsHtml = sortedChildren.map(a => agentCardHtml(a, a.id === state.selectedAgentId, true)).join('')
     }
 
     const childCount = (session.children || []).length
