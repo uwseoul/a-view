@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -24,10 +24,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
@@ -37,13 +33,10 @@ jobs:
           workspaces: src-tauri -> target
 
       - name: Install Tauri CLI
-        run: npm install @tauri-apps/cli@2
-
-      - name: Debug - list files
-        run: ls -la src-tauri/src/ && cat src-tauri/Cargo.toml
+        run: cargo install tauri-cli --version "^2"
 
       - name: Build Tauri app
-        run: npx tauri build
+        run: cargo tauri build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -53,9 +46,10 @@ jobs:
           path: |
             src-tauri/target/release/bundle/**/*.exe
             src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/release/bundle/**/*.msi
 
   publish:
-    needs: release
+    needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
