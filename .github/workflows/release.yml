@@ -2,6 +2,9 @@ name: Build & Release
 
 on:
   push:
+    branches:
+      - feat/tauri
+      - main
     tags:
       - 'v*'
 
@@ -15,9 +18,7 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            target: msiv64
           - os: macos-latest
-            target: apple-darwin
 
     steps:
       - uses: actions/checkout@v4
@@ -27,9 +28,7 @@ jobs:
           node-version: 22
 
       - name: Install Rust stable
-        uses: dtolnay/rust-action@stable
-        with:
-          targets: ${{ matrix.target }}
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install Tauri CLI
         run: npm install -D @tauri-apps/cli@2
