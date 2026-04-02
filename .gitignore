@@ -2,6 +2,7 @@ node_modules/
 .sisyphus/
 dist/
 *.png
+!src-tauri/icons/*.png
 *.log
 src-tauri/target/
 src-tauri/gen/
