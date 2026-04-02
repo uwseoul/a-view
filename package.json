@@ -11,12 +11,16 @@
     "electron:build": "electron-builder build"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.10.1",
     "electron": "^35.0.0",
     "electron-builder": "^25.0.0"
   },
   "build": {
     "appId": "com.opencode.ops-dashboard",
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "server/**/*"
+    ],
     "directories": {
       "output": "dist"
     },
@@ -24,6 +28,13 @@
       "server/**/*",
       "public/**/*",
       "main.js"
-    ]
+    ],
+    "win": {
+      "artifactName": "${name}-${version}-setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false
+    }
   }
 }

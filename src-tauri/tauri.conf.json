@@ -1,0 +1,25 @@
+{
+  "$schema": "https://v2.tauri.app/schema/tauri.conf.json",
+  "productName": "OpenCode Ops Dashboard",
+  "version": "1.0.0",
+  "identifier": "com.opencode.ops-dashboard",
+  "build": {
+    "frontendDist": "../public",
+    "devUrl": "http://localhost:4317"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "OpenCode Ops Dashboard",
+        "width": 1200,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  }
+}

@@ -3,3 +3,5 @@ node_modules/
 dist/
 *.png
 *.log
+src-tauri/target/
+src-tauri/gen/

@@ -15,11 +15,9 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            build_cmd: npm run electron:build
-            artifact: dist/opencode-ops-dashboard Setup *.exe
+            target: msiv64
           - os: macos-latest
-            build_cmd: npm run electron:build -- --mac
-            artifact: dist/*.dmg
+            target: apple-darwin
 
     steps:
       - uses: actions/checkout@v4
@@ -28,16 +26,27 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm ci
+      - name: Install Rust stable
+        uses: dtolnay/rust-action@stable
+        with:
+          targets: ${{ matrix.target }}
 
-      - run: ${{ matrix.build_cmd }}
+      - name: Install Tauri CLI
+        run: npm install -D @tauri-apps/cli@2
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+
+      - run: npx tauri build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
-          path: ${{ matrix.artifact }}
+          path: |
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.dmg
 
   publish:
     needs: release

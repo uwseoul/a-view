@@ -356,16 +356,14 @@ function render() {
 
 async function loadSnapshot() {
   try {
-    const response = await fetch('/api/dashboard/snapshot', { cache: 'no-store' })
-    const payload = await response.json()
-    if (!response.ok) throw new Error(payload.message || 'snapshot load failed')
-    state.snapshot = payload
-    state.error = null
-    ensureSelection(payload)
-    render()
+    const payload = await window.__TAURI__.core.invoke('get_dashboard_snapshot');
+    state.snapshot = payload;
+    state.error = null;
+    ensureSelection(payload);
+    render();
   } catch (error) {
-    state.error = error instanceof Error ? error.message : String(error)
-    render()
+    state.error = error instanceof Error ? error.message : String(error);
+    render();
   }
 }
 

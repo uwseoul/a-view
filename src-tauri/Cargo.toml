@@ -1,0 +1,25 @@
+[package]
+name = "opencode-ops-dashboard"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+name = "opencode_ops_dashboard_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+anyhow = "1"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
