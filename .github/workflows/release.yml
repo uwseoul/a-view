@@ -38,22 +38,15 @@ jobs:
       - name: Build Tauri app
         run: cargo tauri build
 
-      - name: Upload Windows artifacts
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows
-          path: |
-            src-tauri/target/release/bundle/nsis/*
-            src-tauri/target/release/bundle/msi/*
+      - name: List build output
+        shell: bash
+        run: find src-tauri/target/release/bundle -type f 2>/dev/null || echo "No bundle files found"
 
-      - name: Upload macOS artifacts
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: macos
-          path: |
-            src-tauri/target/release/bundle/dmg/*
+          name: ${{ matrix.os }}
+          path: src-tauri/target/release/bundle/
+          if-no-files-found: warn
 
   release:
     needs: build
@@ -64,7 +57,7 @@ jobs:
           path: artifacts
 
       - name: List artifacts
-        run: find artifacts -type f
+        run: ls -R artifacts
 
       - name: Determine tag
         id: tag
