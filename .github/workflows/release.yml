@@ -40,13 +40,19 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: List build output
+        run: dir -Recurse src-tauri\target\release\bundle | Select-Object FullName
+        if: runner.os == 'Windows'
+        shell: pwsh
+
+      - name: List build output
+        run: find src-tauri/target/release/bundle -type f 2>/dev/null || true
+        if: runner.os != 'Windows'
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
-          path: |
-            src-tauri/target/release/bundle/**/*.exe
-            src-tauri/target/release/bundle/**/*.dmg
-            src-tauri/target/release/bundle/**/*.msi
+          path: src-tauri/target/release/bundle/
 
   publish:
     needs: build
