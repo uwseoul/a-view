@@ -13,5 +13,62 @@ pub fn get_dashboard_snapshot() -> Result<Snapshot, String> {
 
 #[tauri::command]
 pub fn get_health() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({ "ok": true }))
+    use std::env;
+
+    let home = env::var("HOME").unwrap_or_else(|_| "NOT_SET".to_string());
+    let userprofile = env::var("USERPROFILE").unwrap_or_else(|_| "NOT_SET".to_string());
+
+    // Test the SAME path resolution as read_raw_sessions
+    let default_path = "~/.local/share/opencode/opencode.db";
+    let resolved_path = if default_path.starts_with("~/") {
+        if let Ok(h) = env::var("HOME") {
+            default_path.replacen("~", &h, 1)
+        } else if let Ok(h) = env::var("USERPROFILE") {
+            default_path.replacen("~", &h, 1)
+        } else {
+            default_path.to_string()
+        }
+    } else {
+        default_path.to_string()
+    };
+
+    let db_status = match rusqlite::Connection::open(&resolved_path) {
+        Ok(conn) => {
+            // Test exact same query as read_raw_sessions
+            let count_result: Result<i64, _> = conn.query_row(
+                "SELECT count(*) FROM session WHERE time_archived IS NULL",
+                [],
+                |row| row.get(0),
+            );
+            let count = match count_result {
+                Ok(n) => format!("{} rows", n),
+                Err(e) => format!("count err: {}", e),
+            };
+
+            // Test row mapping like read_raw_sessions does
+            let mut stmt = conn.prepare(
+                "SELECT id, title, directory, parent_id, time_created, time_updated FROM session WHERE time_archived IS NULL ORDER BY time_updated DESC LIMIT 1"
+            ).unwrap();
+
+            let row_result: Result<String, _> = stmt.query_row([], |row| {
+                let id: String = row.get(0)?;
+                Ok(id)
+            });
+
+            let row_test = match row_result {
+                Ok(id) => format!("row ok id={}", &id[..12.min(id.len())]),
+                Err(e) => format!("row err: {}", e),
+            };
+
+            format!("path_ok, count={}, test={}", count, row_test)
+        }
+        Err(e) => format!("open_err: {} (path={})", e, resolved_path),
+    };
+
+    Ok(serde_json::json!({
+        "HOME": home,
+        "USERPROFILE": userprofile,
+        "resolved_path": resolved_path,
+        "db_status": db_status,
+    }))
 }

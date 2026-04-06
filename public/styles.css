@@ -394,3 +394,21 @@ body {
   .topbar { grid-template-columns: 1fr; }
   .layout { grid-template-columns: 1fr; }
 }
+
+/* Error & Empty States */
+.error-state, .empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  min-height: 200px;
+}
+.error-state {
+  color: var(--red);
+  background: rgba(252, 129, 129, 0.06);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(252, 129, 129, 0.15);
+}

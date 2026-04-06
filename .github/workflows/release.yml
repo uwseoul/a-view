@@ -35,17 +35,34 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2"
 
-      - name: Build Tauri app
-        run: cargo tauri build
+      - name: Build Tauri app (portable)
+        run: cargo tauri build --no-bundle
 
-      - name: List build output
+      - name: Rename portable binary
         shell: bash
-        run: find src-tauri/target/release/bundle -type f 2>/dev/null || echo "No bundle files found"
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            EXE_PATH="src-tauri/target/release/OpenCode Ops Dashboard.exe"
+            if [ -f "$EXE_PATH" ]; then
+              mv "$EXE_PATH" "src-tauri/target/release/a-view-portable.exe"
+              echo "Portable exe: a-view-portable.exe"
+              ls -lh src-tauri/target/release/a-view-portable.exe
+            fi
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            BIN_PATH=$(find src-tauri/target/release -maxdepth 1 -type f -not -name ".*" -not -name "*.d" | head -1)
+            if [ -n "$BIN_PATH" ]; then
+              mv "$BIN_PATH" "src-tauri/target/release/a-view-portable-macos"
+              echo "Portable binary: a-view-portable-macos"
+              ls -lh src-tauri/target/release/a-view-portable-macos
+            fi
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}
-          path: src-tauri/target/release/bundle/
+          name: ${{ matrix.os }}-portable
+          path: |
+            src-tauri/target/release/a-view-portable.exe
+            src-tauri/target/release/a-view-portable-macos
           if-no-files-found: error
 
   release:

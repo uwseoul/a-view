@@ -354,8 +354,23 @@ function render() {
   })
 }
 
+// DB status indicator
+const dbStatus = document.getElementById('db-status');
+
 async function loadSnapshot() {
   try {
+    // Health check (silent)
+    if (window.__TAURI__ && dbStatus) {
+      try {
+        const health = await window.__TAURI__.core.invoke('get_health');
+        if (health.db_status) {
+          dbStatus.textContent = health.db_status;
+          dbStatus.style.opacity = '1';
+        }
+      } catch(_) {}
+    }
+
+    if (!window.__TAURI__) { return; }
     const payload = await window.__TAURI__.core.invoke('get_dashboard_snapshot');
     state.snapshot = payload;
     state.error = null;
@@ -363,6 +378,7 @@ async function loadSnapshot() {
     render();
   } catch (error) {
     state.error = error instanceof Error ? error.message : String(error);
+    if (dbStatus) { dbStatus.textContent = state.error; dbStatus.style.opacity = '1'; }
     render();
   }
 }

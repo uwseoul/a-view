@@ -459,16 +459,8 @@ pub fn normalize_raw_session(
     // Process messages to build agents
     let mut sorted_messages = messages.to_vec();
     sorted_messages.sort_by(|a, b| {
-        let a_time = a
-            .time_created
-            .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
-            .unwrap_or(0);
-        let b_time = b
-            .time_created
-            .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
-            .unwrap_or(0);
+        let a_time = a.time_created.unwrap_or(0);
+        let b_time = b.time_created.unwrap_or(0);
         a_time.cmp(&b_time)
     });
 
@@ -477,11 +469,7 @@ pub fn normalize_raw_session(
             .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
         let agent_name = pick_agent_name(&message_json);
         let model = pick_model(&message_json);
-        let created_at = msg_row
-            .time_created
-            .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
-            .and_then(|ms| as_iso_from_ms(ms));
+        let created_at = msg_row.time_created.and_then(|ms| as_iso_from_ms(ms));
 
         let agent_id = format!("{}:{}", raw.id, agent_name);
 
@@ -512,7 +500,7 @@ pub fn normalize_raw_session(
         if let Some(updated_at) = msg_row
             .time_updated
             .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
+            .copied()
             .and_then(|ms| as_iso_from_ms(ms))
         {
             if agent.last_activity_at.is_none()
@@ -565,11 +553,7 @@ pub fn normalize_raw_session(
 
         let agent_name = pick_agent_name(&message_json);
         let model = pick_model(&message_json);
-        let created_at = part_row
-            .time_created
-            .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
-            .and_then(|ms| as_iso_from_ms(ms));
+        let created_at = part_row.time_created.and_then(|ms| as_iso_from_ms(ms));
 
         let agent_id = format!("{}:{}", raw.id, agent_name);
 
@@ -600,7 +584,7 @@ pub fn normalize_raw_session(
         if let Some(updated_at) = part_row
             .time_updated
             .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
+            .copied()
             .and_then(|ms| as_iso_from_ms(ms))
         {
             if agent.last_activity_at.is_none()
@@ -643,7 +627,7 @@ pub fn normalize_raw_session(
             let updated_at = part_row
                 .time_updated
                 .as_ref()
-                .and_then(|s| s.parse::<i64>().ok())
+                .copied()
                 .and_then(|ms| as_iso_from_ms(ms))
                 .unwrap_or_default();
 
@@ -674,16 +658,8 @@ pub fn normalize_raw_session(
 
     // Ensure at least one agent exists
     if agents.is_empty() {
-        let started_at = raw
-            .time_created
-            .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
-            .and_then(|ms| as_iso_from_ms(ms));
-        let last_activity_at = raw
-            .time_updated
-            .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
-            .and_then(|ms| as_iso_from_ms(ms));
+        let started_at = raw.time_created.and_then(|ms| as_iso_from_ms(ms));
+        let last_activity_at = raw.time_updated.and_then(|ms| as_iso_from_ms(ms));
 
         let todo_summary = if !todos.is_empty() {
             let completed = todos.iter().filter(|t| t.status == "completed").count();
@@ -710,14 +686,7 @@ pub fn normalize_raw_session(
     }
 
     // Calculate duration
-    let duration_sec = if let (Some(start), Some(end)) = (
-        raw.time_created
-            .as_ref()
-            .and_then(|s| s.parse::<i64>().ok()),
-        raw.time_updated
-            .as_ref()
-            .and_then(|s| s.parse::<i64>().ok()),
-    ) {
+    let duration_sec = if let (Some(start), Some(end)) = (raw.time_created, raw.time_updated) {
         Some((end - start) / 1000)
     } else {
         None
@@ -745,12 +714,12 @@ pub fn normalize_raw_session(
         started_at: raw
             .time_created
             .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
+            .copied()
             .and_then(|ms| as_iso_from_ms(ms)),
         last_activity_at: raw
             .time_updated
             .as_ref()
-            .and_then(|s| s.parse::<i64>().ok())
+            .copied()
             .and_then(|ms| as_iso_from_ms(ms)),
         duration_sec,
         stalled_agent_count,

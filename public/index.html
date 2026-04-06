@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpenCode Ops Dashboard</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="db-status" style="position:fixed;bottom:1px;left:50%;transform:translateX(-50%);color:#6f7f9b;padding:2px 10px;font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.3s;"></div>
   <div class="app">
     <header class="topbar">
       <div class="brand">
@@ -57,6 +58,6 @@
     </main>
   </div>
 
-  <script src="/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

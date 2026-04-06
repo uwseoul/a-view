@@ -15,7 +15,7 @@ pub enum Status {
 
 /// Agent object from sessions
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 pub struct Agent {
     pub id: String,
     pub name: String,
@@ -34,7 +34,7 @@ pub struct Agent {
 
 /// Log entry from messages
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 pub struct LogEntry {
     pub time: String,
     pub level: String,
@@ -43,7 +43,7 @@ pub struct LogEntry {
 
 /// Session object with nested agents
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 pub struct Session {
     pub id: String,
     pub name: String,
@@ -60,7 +60,7 @@ pub struct Session {
 
 /// Status counts for sessions/agents
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Default)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 pub struct StatusCounts {
     #[serde(default)]
     pub running: i64,
@@ -76,7 +76,7 @@ pub struct StatusCounts {
 
 /// Snapshot source metadata
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 pub struct SnapshotSource {
     pub db_path: String,
     pub mode: String,
@@ -86,7 +86,7 @@ pub struct SnapshotSource {
 
 /// Complete dashboard snapshot
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 pub struct Snapshot {
     pub generated_at: String,
     pub source: SnapshotSource,
@@ -96,7 +96,7 @@ pub struct Snapshot {
 
 /// Snapshot summary statistics
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "camelCase")]
 pub struct SnapshotSummary {
     pub running_agents: i64,
     pub suspected_stalled: i64,
@@ -115,8 +115,8 @@ pub struct RawSession {
     pub title: String,
     pub directory: String,
     pub parent_id: Option<String>,
-    pub time_created: Option<String>,
-    pub time_updated: Option<String>,
+    pub time_created: Option<i64>,
+    pub time_updated: Option<i64>,
 }
 
 /// Raw message row from database
@@ -125,8 +125,8 @@ pub struct RawSession {
 pub struct RawMessage {
     pub id: String,
     pub session_id: String,
-    pub time_created: Option<String>,
-    pub time_updated: Option<String>,
+    pub time_created: Option<i64>,
+    pub time_updated: Option<i64>,
     pub data: String,
 }
 
@@ -137,8 +137,8 @@ pub struct RawPart {
     pub id: String,
     pub message_id: String,
     pub session_id: String,
-    pub time_created: Option<String>,
-    pub time_updated: Option<String>,
+    pub time_created: Option<i64>,
+    pub time_updated: Option<i64>,
     pub data: String,
 }
 
@@ -150,6 +150,6 @@ pub struct RawTodo {
     pub status: String,
     pub priority: Option<String>,
     pub position: i64,
-    pub time_created: Option<String>,
-    pub time_updated: Option<String>,
+    pub time_created: Option<i64>,
+    pub time_updated: Option<i64>,
 }
