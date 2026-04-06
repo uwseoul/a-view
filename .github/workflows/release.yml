@@ -42,18 +42,26 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
-            EXE_PATH="src-tauri/target/release/OpenCode Ops Dashboard.exe"
+            EXE_PATH="src-tauri/target/release/opencode-ops-dashboard.exe"
             if [ -f "$EXE_PATH" ]; then
               mv "$EXE_PATH" "src-tauri/target/release/a-view-portable.exe"
               echo "Portable exe: a-view-portable.exe"
               ls -lh src-tauri/target/release/a-view-portable.exe
+            else
+              echo "ERROR: $EXE_PATH not found"
+              ls src-tauri/target/release/*.exe 2>/dev/null || true
+              exit 1
             fi
           elif [ "$RUNNER_OS" = "macOS" ]; then
-            BIN_PATH=$(find src-tauri/target/release -maxdepth 1 -type f -not -name ".*" -not -name "*.d" | head -1)
-            if [ -n "$BIN_PATH" ]; then
+            BIN_PATH="src-tauri/target/release/opencode-ops-dashboard"
+            if [ -f "$BIN_PATH" ]; then
               mv "$BIN_PATH" "src-tauri/target/release/a-view-portable-macos"
               echo "Portable binary: a-view-portable-macos"
               ls -lh src-tauri/target/release/a-view-portable-macos
+            else
+              echo "ERROR: $BIN_PATH not found"
+              ls src-tauri/target/release/opencode-ops-dashboard* 2>/dev/null || true
+              exit 1
             fi
           fi
 
