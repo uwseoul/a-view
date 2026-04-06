@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    opencode_ops_dashboard_lib::run()
+    a_view_lib::run()
 }

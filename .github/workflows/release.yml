@@ -3,8 +3,8 @@ name: Build & Release
 on:
   push:
     branches:
-      - feat/tauri
       - main
+      - feat/tauri
     tags:
       - 'v*'
 
@@ -35,45 +35,40 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2"
 
-      - name: Build Tauri app (portable)
+      - name: Build portable binary
         run: cargo tauri build --no-bundle
 
-      - name: Rename portable binary
+      - name: Prepare artifact
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
-            EXE_PATH="src-tauri/target/release/opencode-ops-dashboard.exe"
-            if [ -f "$EXE_PATH" ]; then
-              mv "$EXE_PATH" "src-tauri/target/release/a-view-portable.exe"
-              echo "Portable exe: a-view-portable.exe"
-              ls -lh src-tauri/target/release/a-view-portable.exe
-            else
-              echo "ERROR: $EXE_PATH not found"
+            SRC="src-tauri/target/release/a-view.exe"
+            if [ ! -f "$SRC" ]; then
+              echo "ERROR: $SRC not found"
               ls src-tauri/target/release/*.exe 2>/dev/null || true
               exit 1
             fi
+            mv "$SRC" "src-tauri/target/release/a-view-${{ github.ref_name }}-windows-x64.exe"
           elif [ "$RUNNER_OS" = "macOS" ]; then
-            BIN_PATH="src-tauri/target/release/opencode-ops-dashboard"
-            if [ -f "$BIN_PATH" ]; then
-              mv "$BIN_PATH" "src-tauri/target/release/a-view-portable-macos"
-              echo "Portable binary: a-view-portable-macos"
-              ls -lh src-tauri/target/release/a-view-portable-macos
-            else
-              echo "ERROR: $BIN_PATH not found"
-              ls src-tauri/target/release/opencode-ops-dashboard* 2>/dev/null || true
+            SRC="src-tauri/target/release/a-view"
+            if [ ! -f "$SRC" ]; then
+              echo "ERROR: $SRC not found"
+              ls src-tauri/target/release/a-view* 2>/dev/null || true
               exit 1
             fi
+            mv "$SRC" "src-tauri/target/release/a-view-${{ github.ref_name }}-macos-arm64"
           fi
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-portable
           path: |
-            src-tauri/target/release/a-view-portable.exe
-            src-tauri/target/release/a-view-portable-macos
+            src-tauri/target/release/a-view-*.exe
+            src-tauri/target/release/a-view-*
           if-no-files-found: error
 
   release:
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -84,17 +79,8 @@ jobs:
       - name: List artifacts
         run: ls -R artifacts
 
-      - name: Determine tag
-        id: tag
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          else
-            echo "name=latest" >> $GITHUB_OUTPUT
-          fi
-
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.tag.outputs.name }}
-          name: ${{ steps.tag.outputs.name }}
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           files: artifacts/**/*

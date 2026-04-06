@@ -1,10 +1,10 @@
 [package]
-name = "opencode-ops-dashboard"
-version = "1.0.0"
+name = "a-view"
+version = "1.1.0"
 edition = "2021"
 
 [lib]
-name = "opencode_ops_dashboard_lib"
+name = "a_view_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

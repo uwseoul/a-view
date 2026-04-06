@@ -3,6 +3,19 @@
 version = 4
 
 [[package]]
+name = "a-view"
+version = "1.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+]
+
+[[package]]
 name = "adler2"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2122,19 +2135,6 @@ name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
-
-[[package]]
-name = "opencode-ops-dashboard"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "chrono",
- "rusqlite",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
-]
 
 [[package]]
 name = "option-ext"
