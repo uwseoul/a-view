@@ -11,7 +11,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "a-view — OpenCode Ops Dashboard",
+        "title": "A-view",
         "width": 1200,
         "height": 800,
         "resizable": true,
