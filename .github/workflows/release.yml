@@ -41,6 +41,7 @@ jobs:
       - name: Prepare artifact
         shell: bash
         run: |
+          BRANCHslug=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9.-]/-/g')
           if [ "$RUNNER_OS" = "Windows" ]; then
             SRC="src-tauri/target/release/a-view.exe"
             if [ ! -f "$SRC" ]; then
@@ -48,7 +49,7 @@ jobs:
               ls src-tauri/target/release/*.exe 2>/dev/null || true
               exit 1
             fi
-            mv "$SRC" "src-tauri/target/release/a-view-${{ github.ref_name }}-windows-x64.exe"
+            mv "$SRC" "src-tauri/target/release/a-view-${BRANCHslug}-windows-x64.exe"
           elif [ "$RUNNER_OS" = "macOS" ]; then
             SRC="src-tauri/target/release/a-view"
             if [ ! -f "$SRC" ]; then
@@ -56,7 +57,7 @@ jobs:
               ls src-tauri/target/release/a-view* 2>/dev/null || true
               exit 1
             fi
-            mv "$SRC" "src-tauri/target/release/a-view-${{ github.ref_name }}-macos-arm64"
+            mv "$SRC" "src-tauri/target/release/a-view-${BRANCHslug}-macos-arm64"
           fi
 
       - uses: actions/upload-artifact@v4
