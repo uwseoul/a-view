@@ -359,8 +359,9 @@ const dbStatus = document.getElementById('db-status');
 
 async function loadSnapshot() {
   try {
-    // Health check (silent)
-    if (window.__TAURI__ && dbStatus) {
+    let payload = null;
+
+    if (window.__TAURI__) {
       try {
         const health = await window.__TAURI__.core.invoke('get_health');
         if (health.db_status) {
@@ -368,10 +369,14 @@ async function loadSnapshot() {
           dbStatus.style.opacity = '1';
         }
       } catch(_) {}
+
+      payload = await window.__TAURI__.core.invoke('get_dashboard_snapshot');
+    } else {
+      const res = await fetch('/api/dashboard/snapshot');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      payload = await res.json();
     }
 
-    if (!window.__TAURI__) { return; }
-    const payload = await window.__TAURI__.core.invoke('get_dashboard_snapshot');
     state.snapshot = payload;
     state.error = null;
     ensureSelection(payload);
