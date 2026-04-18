@@ -1,7 +1,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
-const { DatabaseSync } = require('node:sqlite')
+const Database = require('better-sqlite3')
 
 const DEFAULT_DB_PATH = path.join(os.homedir(), '.local', 'share', 'opencode', 'opencode.db')
 const DEFAULT_TRANSCRIPTS_DIR = path.join(os.homedir(), '.claude', 'transcripts')
@@ -90,14 +90,13 @@ function readTranscriptTail(sessionId, limit = 8) {
 }
 
 function openDb(dbPath = DEFAULT_DB_PATH) {
-  if (!fs.existsSync(dbPath)) {
-    throw new Error(`OpenCode DB not found: ${dbPath}`)
-  }
-  return new DatabaseSync(dbPath, { readonly: true })
+  if (!fs.existsSync(dbPath)) return null
+  return new Database(dbPath, { readonly: true })
 }
 
 function readRawSessions({ limit = 20, dbPath = DEFAULT_DB_PATH } = {}) {
   const db = openDb(dbPath)
+  if (!db) return []
   try {
     const sessions = db.prepare(`
       SELECT id, title, directory, parent_id, time_created, time_updated
