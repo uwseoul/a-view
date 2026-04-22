@@ -12,3 +12,14 @@ src-tauri/icons/ios/
 *.log
 src-tauri/target/
 src-tauri/gen/
+
+# Credentials & secrets
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+credentials*
+secret*
+*.secret
