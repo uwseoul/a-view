@@ -13,6 +13,19 @@ const state = {
   portCategories: new Set(), // empty = show all (same as 전체 checked)
 }
 
+const polling = {
+  snapshotTimer: null,
+  portTimer: null,
+  runningDelay: 5000,
+  idleDelay: 10000,
+  hiddenDelay: 15000,
+  portActiveDelay: 10000,
+  isVisible: !document.hidden,
+}
+
+let isSnapshotLoading = false
+let isPortLoading = false
+
 const invoke = window.__TAURI__?.core?.invoke.bind(window.__TAURI__.core) ?? (() => Promise.reject('No Tauri'))
 
 function formatAge(ageSec) {
@@ -346,7 +359,7 @@ function renderError(message) {
   document.getElementById('detail-panel').innerHTML = `<div class="panel--detail-scroll"><div class="error-state">${escapeHtml(message)}</div></div>`
 }
 
-function render() {
+function renderHeavy() {
   if (state.error) { renderError(state.error); return }
   if (!state.snapshot) return
 
@@ -358,7 +371,6 @@ function render() {
   if (sm) sp.sessions = sm.scrollTop
   if (ds) sp.detail = ds.scrollTop
 
-  renderTopBar(state.snapshot)
   renderProjects(state.snapshot)
   renderAllSessions(state.snapshot)
   renderDetail()
@@ -371,6 +383,12 @@ function render() {
     if (sm2 && sp.sessions != null) sm2.scrollTop = sp.sessions
     if (ds2 && sp.detail != null) ds2.scrollTop = sp.detail
   })
+}
+
+function render() {
+  if (!state.snapshot) return
+  renderTopBar(state.snapshot)
+  renderHeavy()
 }
 
 // DB status indicator
@@ -390,6 +408,37 @@ function updateSleepUI(status) {
   }
 }
 
+function getSnapshotDelay() {
+  if (!polling.isVisible) return polling.hiddenDelay
+  const running = state.snapshot?.summary?.runningAgents ?? 0
+  return running > 0 ? polling.runningDelay : polling.idleDelay
+}
+
+function scheduleSnapshotPolling() {
+  clearTimeout(polling.snapshotTimer)
+  polling.snapshotTimer = setTimeout(loadSnapshot, getSnapshotDelay())
+}
+
+function schedulePortPolling() {
+  clearTimeout(polling.portTimer)
+  if (!polling.isVisible || state.activeTab !== 'portkiller') return
+  polling.portTimer = setTimeout(async () => {
+    await loadPorts()
+    schedulePortPolling()
+  }, polling.portActiveDelay)
+}
+
+document.addEventListener('visibilitychange', () => {
+  polling.isVisible = !document.hidden
+  if (polling.isVisible) {
+    loadSnapshot()
+    if (state.activeTab === 'portkiller') loadPorts()
+  } else {
+    scheduleSnapshotPolling()
+    schedulePortPolling()
+  }
+})
+
 // ── Tab Navigation ──
 function initTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -398,14 +447,21 @@ function initTabs() {
       state.activeTab = tab
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab))
       document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('hidden', c.id !== `tab-${tab}`))
-      if (tab === 'portkiller') loadPorts()
+      if (tab === 'portkiller') {
+        loadPorts()
+        schedulePortPolling()
+      } else {
+        schedulePortPolling()
+      }
     })
   })
   const searchInput = document.getElementById('port-search')
+  let portSearchTimer = null
   if (searchInput) {
     searchInput.addEventListener('input', () => {
       state.portSearch = searchInput.value
-      renderPorts()
+      clearTimeout(portSearchTimer)
+      portSearchTimer = setTimeout(renderPorts, 200)
     })
   }
   const refreshBtn = document.getElementById('port-refresh')
@@ -452,6 +508,8 @@ function initTabs() {
 
 // ── Port Killer ──
 async function loadPorts() {
+  if (isPortLoading) return
+  isPortLoading = true
   try {
     const result = await invoke('scan_ports')
     state.portData = result
@@ -459,6 +517,8 @@ async function loadPorts() {
   } catch(e) {
     const tbody = document.getElementById('port-table-body')
     if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="port-error">포트 스캔 실패: ${escapeHtml(String(e))}</td></tr>`
+  } finally {
+    isPortLoading = false
   }
 }
 
@@ -520,27 +580,33 @@ async function killPort(pid) {
   }
 }
 
-async function loadSnapshot() {
-  try {
-    // Health check (silent)
-    if (window.__TAURI__ && dbStatus) {
-      try {
-        const health = await window.__TAURI__.core.invoke('get_health');
-        if (health.db_status) {
-          dbStatus.textContent = health.db_status;
-          dbStatus.style.opacity = '1';
-        }
-      } catch(_) {}
+// ── Dirty-check signature ──
+let _lastSig = ''
+function snapshotSignature(snap) {
+  const s = snap.summary
+  let sig = `${s.runningAgents}|${s.suspectedStalled}`
+  for (const session of snap.sessions) {
+    sig += `|${session.id}:${session.agents.map(a => a.id + '=' + a.status).join(',')}`
+    for (const child of (session.children || [])) {
+      sig += `|c:${child.id}:${child.agents.map(a => a.id + '=' + a.status).join(',')}`
     }
+  }
+  return sig
+}
 
+async function loadSnapshot() {
+  if (isSnapshotLoading) return
+  isSnapshotLoading = true
+  try {
     if (!window.__TAURI__) { return; }
     const payload = await window.__TAURI__.core.invoke('get_dashboard_snapshot');
     state.snapshot = payload;
     state.error = null;
-    ensureSelection(payload);
-    render();
 
-    // SleepGuard auto-detect
+    // Always update topbar (cheap — 3 text nodes)
+    renderTopBar(payload)
+
+    // SleepGuard auto-detect (cheap — 2 invoke calls)
     if (state.snapshot && window.__TAURI__) {
       const running = state.snapshot.summary.runningAgents
       try {
@@ -553,13 +619,30 @@ async function loadSnapshot() {
         updateSleepUI(sleepStatus)
       } catch(_) {}
     }
+
+    // Dirty-check: skip heavy render if snapshot is structurally identical
+    const sig = snapshotSignature(payload)
+    if (sig === _lastSig) {
+      // Still need to keep selection valid even if no visible change
+      ensureSelection(payload)
+      return
+    }
+    _lastSig = sig
+
+    ensureSelection(payload);
+    // Full render (minus topbar which was already done)
+    renderHeavy();
+
   } catch (error) {
     state.error = error instanceof Error ? error.message : String(error);
     if (dbStatus) { dbStatus.textContent = state.error; dbStatus.style.opacity = '1'; }
     render();
+  } finally {
+    isSnapshotLoading = false
+    scheduleSnapshotPolling()
+    schedulePortPolling()
   }
 }
 
 loadSnapshot()
 initTabs()
-setInterval(loadSnapshot, 5000)
