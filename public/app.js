@@ -1,3 +1,5 @@
+const CATEGORY_KEYS = ['web_server', 'database', 'development', 'system', 'other']
+
 const state = {
   snapshot: null,
   selectedDirectory: null,
@@ -5,7 +7,13 @@ const state = {
   selectedAgentId: null,
   expandedProjects: new Set(),
   error: null,
+  activeTab: 'dashboard',
+  portData: null,
+  portSearch: '',
+  portCategories: new Set(), // empty = show all (same as 전체 checked)
 }
+
+const invoke = window.__TAURI__?.core?.invoke.bind(window.__TAURI__.core) ?? (() => Promise.reject('No Tauri'))
 
 function formatAge(ageSec) {
   if (ageSec == null) return 'n/a'
@@ -13,6 +21,17 @@ function formatAge(ageSec) {
   const min = Math.floor(ageSec / 60)
   const sec = ageSec % 60
   return `${min}m ${sec}s ago`
+}
+
+function relativeTimeKorean(dateStr) {
+  const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+  if (diffSec < 5) return '방금 전'
+  if (diffSec < 60) return `${diffSec}초 전`
+  const min = Math.floor(diffSec / 60)
+  if (min < 60) return `${min}분 전`
+  const hr = Math.floor(min / 60)
+  if (hr < 24) return `${hr}시간 전`
+  return `${Math.floor(hr / 24)}일 전`
 }
 
 function formatDuration(sec) {
@@ -106,7 +125,7 @@ function groupByDirectory(sessions) {
 function renderTopBar(snapshot) {
   document.getElementById('running-agents').textContent = snapshot.summary.runningAgents
   document.getElementById('stalled-agents').textContent = snapshot.summary.suspectedStalled
-  document.getElementById('last-refreshed').textContent = `Last refresh ${new Date(snapshot.generatedAt).toLocaleTimeString()}`
+  document.getElementById('last-refreshed').textContent = relativeTimeKorean(snapshot.generatedAt)
 }
 
 function renderProjects(snapshot) {
@@ -357,6 +376,150 @@ function render() {
 // DB status indicator
 const dbStatus = document.getElementById('db-status');
 
+// ── SleepGuard UI ──
+function updateSleepUI(status) {
+  const icon = document.getElementById('sleep-icon')
+  const label = document.getElementById('sleep-label')
+  if (!icon || !label) return
+  if (status.isPreventing) {
+    icon.textContent = '🟢'
+    label.textContent = '절전 방지 중'
+  } else {
+    icon.textContent = '⚪'
+    label.textContent = '대기 중'
+  }
+}
+
+// ── Tab Navigation ──
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab
+      state.activeTab = tab
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab))
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('hidden', c.id !== `tab-${tab}`))
+      if (tab === 'portkiller') loadPorts()
+    })
+  })
+  const searchInput = document.getElementById('port-search')
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      state.portSearch = searchInput.value
+      renderPorts()
+    })
+  }
+  const refreshBtn = document.getElementById('port-refresh')
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', loadPorts)
+  }
+
+  // Category filter checkboxes
+  const catAll = document.getElementById('cat-all')
+  const catSpecific = document.querySelectorAll('.port-filter__item input[data-category]:not(#cat-all)')
+
+  if (catAll) {
+    catAll.addEventListener('change', () => {
+      if (catAll.checked) {
+        // Reset to show all
+        state.portCategories.clear()
+        catSpecific.forEach(cb => { cb.checked = false })
+      } else {
+        // Unchecking 전체 alone: check all specific as fallback
+        catAll.checked = true
+      }
+      renderPorts()
+    })
+  }
+
+  catSpecific.forEach(cb => {
+    cb.addEventListener('change', () => {
+      const cat = cb.dataset.category
+      if (cb.checked) {
+        state.portCategories.add(cat)
+        // Uncheck 전체 when specific categories are selected
+        if (catAll) catAll.checked = false
+      } else {
+        state.portCategories.delete(cat)
+        // If no specific categories checked, revert to 전체
+        if (state.portCategories.size === 0 && catAll) {
+          catAll.checked = true
+        }
+      }
+      renderPorts()
+    })
+  })
+}
+
+// ── Port Killer ──
+async function loadPorts() {
+  try {
+    const result = await invoke('scan_ports')
+    state.portData = result
+    renderPorts()
+  } catch(e) {
+    const tbody = document.getElementById('port-table-body')
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="port-error">포트 스캔 실패: ${escapeHtml(String(e))}</td></tr>`
+  }
+}
+
+function renderPorts() {
+  const tbody = document.getElementById('port-table-body')
+  if (!tbody || !state.portData) return
+
+  let ports = state.portData.ports || []
+
+  // Category filter: if state.portCategories is non-empty, only those categories
+  if (state.portCategories.size > 0) {
+    ports = ports.filter(p => state.portCategories.has(p.category))
+  }
+
+  // Search filter
+  const search = state.portSearch.toLowerCase()
+  if (search) {
+    ports = ports.filter(p =>
+      String(p.port).includes(search) ||
+      (p.processName || '').toLowerCase().includes(search) ||
+      (p.localAddr || '').includes(search)
+    )
+  }
+
+  // Update filter count
+  const countEl = document.getElementById('port-filter-count')
+  if (countEl) {
+    const total = (state.portData.ports || []).length
+    countEl.textContent = ports.length === total ? `${total}개` : `${ports.length} / ${total}`
+  }
+
+  if (!ports.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="port-empty">열린 포트가 없습니다</td></tr>'
+    return
+  }
+
+  tbody.innerHTML = ports.map(p => `
+    <tr>
+      <td class="port-num">${escapeHtml(String(p.port))}</td>
+      <td>${escapeHtml(p.processName || '—')}</td>
+      <td class="port-pid">${p.pid || '—'}</td>
+      <td><span class="category-badge category-badge--${p.category}">${categoryLabel(p.category)}</span></td>
+      <td>${p.pid ? `<button class="kill-btn" onclick="killPort(${p.pid})">종료</button>` : ''}</td>
+    </tr>
+  `).join('')
+}
+
+function categoryLabel(cat) {
+  const labels = { web_server: 'Web', database: 'DB', development: 'Dev', system: 'Sys', other: '기타' }
+  return labels[cat] || cat
+}
+
+async function killPort(pid) {
+  try {
+    await invoke('kill_port_process', { pid })
+    await loadPorts()
+  } catch(e) {
+    alert(`프로세스 종료 실패: ${e}`)
+  }
+}
+
 async function loadSnapshot() {
   try {
     // Health check (silent)
@@ -376,6 +539,20 @@ async function loadSnapshot() {
     state.error = null;
     ensureSelection(payload);
     render();
+
+    // SleepGuard auto-detect
+    if (state.snapshot && window.__TAURI__) {
+      const running = state.snapshot.summary.runningAgents
+      try {
+        await invoke('set_sleep_prevention', {
+          prevent: running > 0,
+          reason: running > 0 ? 'agent_running' : 'idle',
+          activeAgents: running,
+        })
+        const sleepStatus = await invoke('get_sleep_status')
+        updateSleepUI(sleepStatus)
+      } catch(_) {}
+    }
   } catch (error) {
     state.error = error instanceof Error ? error.message : String(error);
     if (dbStatus) { dbStatus.textContent = state.error; dbStatus.style.opacity = '1'; }
@@ -384,4 +561,5 @@ async function loadSnapshot() {
 }
 
 loadSnapshot()
+initTabs()
 setInterval(loadSnapshot, 5000)
