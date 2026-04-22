@@ -4,14 +4,13 @@
   "version": "1.1.0",
   "identifier": "com.opencode.a-view",
   "build": {
-    "frontendDist": "../public",
-    "devUrl": "http://localhost:4317"
+    "frontendDist": "../public"
   },
   "app": {
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "A-view",
+        "title": "a-view — OpenCode Ops Dashboard",
         "width": 1200,
         "height": 800,
         "resizable": true,
@@ -24,7 +23,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": [],
+    "targets": ["nsis", "dmg"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

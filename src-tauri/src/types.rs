@@ -153,3 +153,57 @@ pub struct RawTodo {
     pub time_created: Option<i64>,
     pub time_updated: Option<i64>,
 }
+
+// =============================================================================
+// SleepGuard types
+// =============================================================================
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SleepStatus {
+    pub is_preventing: bool,
+    pub reason: String,
+    pub active_agents: i64,
+    pub last_changed_at: String,
+}
+
+// =============================================================================
+// PortKiller types
+// =============================================================================
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PortEntry {
+    pub protocol: String,
+    pub local_addr: String,
+    pub port: u16,
+    pub pid: Option<u32>,
+    pub process_name: Option<String>,
+    pub category: PortCategory,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum PortCategory {
+    WebServer,
+    Database,
+    Development,
+    System,
+    Other,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PortScanResult {
+    pub ports: Vec<PortEntry>,
+    pub scanned_at: String,
+    pub total_count: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct KillResult {
+    pub pid: u32,
+    pub success: bool,
+    pub message: String,
+}

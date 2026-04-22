@@ -1,6 +1,11 @@
+use crate::app_state::AppState;
 use crate::dashboard_service;
-use crate::types::Snapshot;
+use crate::port_scanner;
+use crate::process_killer;
+use crate::sleep_manager;
+use crate::types::{KillResult, PortScanResult, SleepStatus, Snapshot};
 use chrono::Utc;
+use tauri::State;
 
 #[tauri::command]
 pub fn get_dashboard_snapshot() -> Result<Snapshot, String> {
@@ -71,4 +76,33 @@ pub fn get_health() -> Result<serde_json::Value, String> {
         "resolved_path": resolved_path,
         "db_status": db_status,
     }))
+}
+
+#[tauri::command]
+pub fn get_sleep_status(state: State<'_, AppState>) -> Result<SleepStatus, String> {
+    Ok(sleep_manager::get_sleep_status(&state))
+}
+
+#[tauri::command]
+pub fn set_sleep_prevention(
+    state: State<'_, AppState>,
+    prevent: bool,
+    reason: String,
+    active_agents: i64,
+) -> Result<SleepStatus, String> {
+    if prevent {
+        sleep_manager::start_prevent_sleep(&state, active_agents, &reason)
+    } else {
+        sleep_manager::stop_prevent_sleep(&state, &reason)
+    }
+}
+
+#[tauri::command]
+pub fn scan_ports() -> Result<PortScanResult, String> {
+    port_scanner::scan_ports()
+}
+
+#[tauri::command]
+pub fn kill_port_process(pid: u32) -> Result<KillResult, String> {
+    process_killer::kill_process(pid)
 }
