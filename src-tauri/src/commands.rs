@@ -10,7 +10,7 @@ use tauri::State;
 #[tauri::command]
 pub fn get_dashboard_snapshot() -> Result<Snapshot, String> {
     let now = Utc::now();
-    let limit = 100;
+    let limit = 50;
     let db_path = None;
 
     dashboard_service::build_snapshot(now, limit, db_path).map_err(|e| e.to_string())
