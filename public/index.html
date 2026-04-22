@@ -18,6 +18,11 @@
         </div>
       </div>
 
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="portkiller">Port Killer</button>
+      </nav>
+
       <div class="kpi-row">
         <section class="kpi-card kpi-card--running">
           <div class="kpi-card__label">Running Agents</div>
@@ -30,11 +35,16 @@
       </div>
 
       <div class="meta-status">
+        <div class="sleep-indicator" id="sleep-indicator" title="Sleep prevention status">
+          <span id="sleep-icon">⚪</span>
+          <span id="sleep-label">대기 중</span>
+        </div>
         <div class="live"><span class="live__dot"></span><span>Polling every 5s</span></div>
-        <div id="last-refreshed">Last refresh --</div>
+        <div id="last-refreshed">--</div>
       </div>
     </header>
 
+    <div id="tab-dashboard" class="tab-content">
     <main class="layout">
       <aside class="panel panel--projects">
         <div class="panel__header">
@@ -56,6 +66,68 @@
         </div>
       </aside>
     </main>
+    </div>
+
+    <div id="tab-portkiller" class="tab-content hidden">
+      <div class="port-header">
+        <input class="port-search" id="port-search" type="text" placeholder="포트 또는 프로세스 검색...">
+        <button class="port-refresh-btn" id="port-refresh">새로고침</button>
+      </div>
+      <div class="port-layout">
+        <aside class="port-filter">
+          <div class="port-filter__header">분류 필터</div>
+          <label class="port-filter__item port-filter__item--all">
+            <input type="checkbox" id="cat-all" data-category="all" checked>
+            <span class="port-filter__check"></span>
+            <span class="port-filter__label">전체</span>
+          </label>
+          <label class="port-filter__item">
+            <input type="checkbox" data-category="web_server">
+            <span class="port-filter__check"></span>
+            <span class="port-filter__label cat-dot cat-dot--web_server">Web</span>
+          </label>
+          <label class="port-filter__item">
+            <input type="checkbox" data-category="database">
+            <span class="port-filter__check"></span>
+            <span class="port-filter__label cat-dot cat-dot--database">DB</span>
+          </label>
+          <label class="port-filter__item">
+            <input type="checkbox" data-category="development">
+            <span class="port-filter__check"></span>
+            <span class="port-filter__label cat-dot cat-dot--development">Dev</span>
+          </label>
+          <label class="port-filter__item">
+            <input type="checkbox" data-category="system">
+            <span class="port-filter__check"></span>
+            <span class="port-filter__label cat-dot cat-dot--system">Sys</span>
+          </label>
+          <label class="port-filter__item">
+            <input type="checkbox" data-category="other">
+            <span class="port-filter__check"></span>
+            <span class="port-filter__label cat-dot cat-dot--other">기타</span>
+          </label>
+          <div class="port-filter__count" id="port-filter-count"></div>
+        </aside>
+        <div class="port-main">
+          <div class="port-table-wrap">
+            <table class="port-table">
+              <thead>
+                <tr>
+                  <th>포트</th>
+                  <th>프로세스</th>
+                  <th>PID</th>
+                  <th>분류</th>
+                  <th>동작</th>
+                </tr>
+              </thead>
+              <tbody id="port-table-body">
+                <tr><td colspan="5" class="port-empty">포트를 스캔하는 중...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>
