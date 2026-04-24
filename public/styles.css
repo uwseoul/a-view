@@ -447,6 +447,11 @@ body {
 .tab-content.hidden { display: none; }
 
 /* ── Sleep Indicator ── */
+.sleep-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+}
 .sleep-indicator {
   display: flex;
   align-items: center;
@@ -455,8 +460,115 @@ body {
   color: var(--text-muted);
   margin-bottom: 2px;
   justify-content: flex-end;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.sleep-indicator:hover {
+  background: rgba(79, 209, 197, 0.08);
 }
 #sleep-icon { font-size: 9px; }
+
+.sleep-debug {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  width: 268px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  z-index: 100;
+  overflow: hidden;
+}
+.sleep-debug.hidden { display: none; }
+.sleep-debug__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  background: rgba(79, 209, 197, 0.06);
+}
+.sleep-debug__close {
+  cursor: pointer;
+  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.sleep-debug__close:hover { color: var(--text); }
+.sleep-debug__body {
+  padding: 6px 0 10px;
+}
+.sleep-debug__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 12px;
+  font-size: 10px;
+}
+.sleep-debug__row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+.sleep-debug__row--countdown .sleep-debug__val {
+  font-weight: 700;
+}
+.sleep-debug__key {
+  color: var(--text-soft);
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+.sleep-debug__val {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-family: var(--mono);
+  text-align: right;
+}
+.sleep-debug__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 5px 12px;
+}
+.sleep-debug__toggle {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 6px 12px 0;
+  padding: 6px 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.sleep-debug__toggle:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.sleep-debug__toggle--off {
+  color: var(--red);
+  border-color: rgba(252, 129, 129, 0.25);
+}
+.sleep-debug__toggle--off:hover {
+  background: rgba(252, 129, 129, 0.08);
+}
+.sleep-debug__toggle--on {
+  color: var(--accent);
+  border-color: rgba(79, 209, 197, 0.25);
+}
+.sleep-debug__toggle--on:hover {
+  background: rgba(79, 209, 197, 0.08);
+}
 
 /* ── Port Killer ── */
 .port-layout {
