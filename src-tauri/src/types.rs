@@ -165,6 +165,9 @@ pub struct SleepStatus {
     pub reason: String,
     pub active_agents: i64,
     pub last_changed_at: String,
+    pub display: bool,
+    pub idle: bool,
+    pub started_at: Option<String>,
 }
 
 // =============================================================================
