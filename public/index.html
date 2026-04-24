@@ -35,9 +35,60 @@
       </div>
 
       <div class="meta-status">
-        <div class="sleep-indicator" id="sleep-indicator" title="Sleep prevention status">
-          <span id="sleep-icon">⚪</span>
-          <span id="sleep-label">대기 중</span>
+        <div class="sleep-wrapper">
+          <div class="sleep-indicator" id="sleep-indicator" title="Sleep prevention status">
+            <span id="sleep-icon">⚪</span>
+            <span id="sleep-label">대기 중</span>
+          </div>
+          <div class="sleep-debug hidden" id="sleep-debug">
+            <div class="sleep-debug__header">
+              <span>SleepGuard</span>
+              <span class="sleep-debug__close" id="sleep-debug-close">✕</span>
+            </div>
+            <div class="sleep-debug__body">
+              <div class="sleep-debug__row">
+                <span class="sleep-debug__key">상태</span>
+                <span class="sleep-debug__val" id="dbg-preventing">—</span>
+              </div>
+              <div class="sleep-debug__row">
+                <span class="sleep-debug__key">모드</span>
+                <span class="sleep-debug__val" id="dbg-mode">—</span>
+              </div>
+              <div class="sleep-debug__row">
+                <span class="sleep-debug__key">활성 에이전트</span>
+                <span class="sleep-debug__val" id="dbg-agents">—</span>
+              </div>
+              <div class="sleep-debug__divider"></div>
+              <div class="sleep-debug__row">
+                <span class="sleep-debug__key">화면 꺼짐 방지</span>
+                <span class="sleep-debug__val" id="dbg-display">—</span>
+              </div>
+              <div class="sleep-debug__row">
+                <span class="sleep-debug__key">시스템 대기 방지</span>
+                <span class="sleep-debug__val" id="dbg-idle">—</span>
+              </div>
+              <div class="sleep-debug__divider"></div>
+              <div class="sleep-debug__row">
+                <span class="sleep-debug__key" id="dbg-time-label">시작 시각</span>
+                <span class="sleep-debug__val" id="dbg-time">—</span>
+              </div>
+              <div class="sleep-debug__row">
+                <span class="sleep-debug__key" id="dbg-duration-label">유지 시간</span>
+                <span class="sleep-debug__val" id="dbg-duration">—</span>
+              </div>
+              <div class="sleep-debug__divider"></div>
+              <div class="sleep-debug__row sleep-debug__row--countdown">
+                <span class="sleep-debug__key">다음 체크</span>
+                <span class="sleep-debug__val" id="dbg-countdown">—</span>
+              </div>
+              <div class="sleep-debug__row">
+                <span class="sleep-debug__key">예상</span>
+                <span class="sleep-debug__val" id="dbg-expect">—</span>
+              </div>
+              <div class="sleep-debug__divider"></div>
+              <button class="sleep-debug__toggle" id="sleep-manual-toggle">수동 끄기</button>
+            </div>
+          </div>
         </div>
         <div class="live"><span class="live__dot"></span><span>Polling every 5s</span></div>
         <div id="last-refreshed">--</div>

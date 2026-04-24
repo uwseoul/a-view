@@ -395,17 +395,167 @@ function render() {
 const dbStatus = document.getElementById('db-status');
 
 // ── SleepGuard UI ──
+let _sleepCountdownTimer = null
+let _sleepNextPollAt = 0
+
 function updateSleepUI(status) {
   const icon = document.getElementById('sleep-icon')
   const label = document.getElementById('sleep-label')
   if (!icon || !label) return
   if (status.isPreventing) {
     icon.textContent = '🟢'
-    label.textContent = '절전 방지 중'
+    label.textContent = '절전 방지'
   } else {
     icon.textContent = '⚪'
-    label.textContent = '대기 중'
+    label.textContent = '시스템 설정에 따름'
   }
+  updateSleepDebug(status)
+}
+
+function formatDurationKorean(sec) {
+  if (sec == null || sec < 0) return '—'
+  const h = Math.floor(sec / 3600)
+  const m = Math.floor((sec % 3600) / 60)
+  const s = Math.floor(sec % 60)
+  if (h > 0) return `${h}시간 ${m}분`
+  if (m > 0) return `${m}분 ${s}초`
+  return `${s}초`
+}
+
+function formatTimeShort(isoStr) {
+  if (!isoStr) return '—'
+  try {
+    return new Date(isoStr).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  } catch (_) {
+    return isoStr
+  }
+}
+
+function updateSleepDebug(status) {
+  const el = (id) => document.getElementById(id)
+  const preventingEl = el('dbg-preventing')
+  const modeEl = el('dbg-mode')
+  const agentsEl = el('dbg-agents')
+  const displayEl = el('dbg-display')
+  const idleEl = el('dbg-idle')
+  const timeLabelEl = el('dbg-time-label')
+  const timeEl = el('dbg-time')
+  const durationLabelEl = el('dbg-duration-label')
+  const durationEl = el('dbg-duration')
+  const countdownEl = el('dbg-countdown')
+  const expectEl = el('dbg-expect')
+  const toggleBtn = el('sleep-manual-toggle')
+
+  if (!preventingEl) return
+
+  const active = status.isPreventing
+  const agents = status.activeAgents ?? 0
+
+  // 상태
+  preventingEl.textContent = active ? '🟢 절전 방지 중' : '⚪ 시스템 설정에 따름'
+  preventingEl.style.color = active ? '#4fd1c5' : '#6f7f9b'
+
+  // 모드
+  modeEl.textContent = active ? '시스템 설정 무시 · 절전 차단' : 'OS 기본 절전 정책 따름'
+  modeEl.style.color = active ? '#90a0bd' : '#6f7f9b'
+
+  // 활성 에이전트
+  agentsEl.textContent = agents > 0 ? `${agents}개` : '0개'
+  agentsEl.style.color = agents > 0 ? '#4fd1c5' : '#6f7f9b'
+
+  // display / idle
+  displayEl.textContent = status.display ? 'ON' : 'OFF'
+  displayEl.style.color = status.display ? '#4fd1c5' : '#6f7f9b'
+  idleEl.textContent = status.idle ? 'ON' : 'OFF'
+  idleEl.style.color = status.idle ? '#4fd1c5' : '#6f7f9b'
+
+  // 시각 / 유지시간
+  if (active && status.startedAt) {
+    timeLabelEl.textContent = '시작 시각'
+    timeEl.textContent = formatTimeShort(status.startedAt)
+    const durSec = Math.floor((Date.now() - new Date(status.startedAt).getTime()) / 1000)
+    durationLabelEl.textContent = '유지 시간'
+    durationEl.textContent = formatDurationKorean(durSec)
+  } else if (!active && status.lastChangedAt) {
+    timeLabelEl.textContent = '해제 시각'
+    timeEl.textContent = formatTimeShort(status.lastChangedAt)
+    const durSec = Math.floor((Date.now() - new Date(status.lastChangedAt).getTime()) / 1000)
+    durationLabelEl.textContent = '경과 시간'
+    durationEl.textContent = formatDurationKorean(durSec)
+  } else {
+    timeLabelEl.textContent = '시각'
+    timeEl.textContent = '—'
+    durationLabelEl.textContent = '시간'
+    durationEl.textContent = '—'
+  }
+
+  // 예상
+  expectEl.textContent = active ? '수동 끄기 → 시스템 설정에 따름' : '수동 켜기 → 절전 방지'
+  expectEl.style.color = '#6f7f9b'
+
+  // 수동 토글 버튼
+  if (toggleBtn) {
+    toggleBtn.textContent = active ? '수동 끄기' : '수동 켜기'
+    toggleBtn.className = active ? 'sleep-debug__toggle sleep-debug__toggle--off' : 'sleep-debug__toggle sleep-debug__toggle--on'
+  }
+}
+
+function startSleepCountdown() {
+  if (_sleepCountdownTimer) clearInterval(_sleepCountdownTimer)
+  const countdownEl = document.getElementById('dbg-countdown')
+  if (!countdownEl) return
+
+  _sleepCountdownTimer = setInterval(() => {
+    const remaining = Math.max(0, Math.ceil((_sleepNextPollAt - Date.now()) / 1000))
+    const panel = document.getElementById('sleep-debug')
+    if (!panel || panel.classList.contains('hidden')) return
+    countdownEl.textContent = remaining > 0 ? `${remaining}초 후 상태 확인` : '확인 중...'
+    countdownEl.style.color = remaining <= 3 ? '#f6ad55' : '#90a0bd'
+  }, 500)
+}
+
+function initSleepDebug() {
+  const indicator = document.getElementById('sleep-indicator')
+  const debugPanel = document.getElementById('sleep-debug')
+  const closeBtn = document.getElementById('sleep-debug-close')
+  const toggleBtn = document.getElementById('sleep-manual-toggle')
+  if (!indicator || !debugPanel) return
+
+  indicator.style.cursor = 'pointer'
+  indicator.addEventListener('click', (e) => {
+    e.stopPropagation()
+    debugPanel.classList.toggle('hidden')
+  })
+  if (closeBtn) {
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      debugPanel.classList.add('hidden')
+    })
+  }
+  // Manual toggle
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', async (e) => {
+      e.stopPropagation()
+      const current = await invoke('get_sleep_status').catch(() => null)
+      if (!current) return
+      const newPrevent = !current.isPreventing
+      try {
+        const result = await invoke('set_sleep_prevention', {
+          prevent: newPrevent,
+          reason: newPrevent ? 'manual' : 'manual',
+          activeAgents: newPrevent ? -1 : 0,
+        })
+        updateSleepUI(result)
+      } catch (_) {}
+    })
+  }
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!debugPanel.contains(e.target) && !indicator.contains(e.target)) {
+      debugPanel.classList.add('hidden')
+    }
+  })
+  startSleepCountdown()
 }
 
 function getSnapshotDelay() {
@@ -416,7 +566,9 @@ function getSnapshotDelay() {
 
 function scheduleSnapshotPolling() {
   clearTimeout(polling.snapshotTimer)
-  polling.snapshotTimer = setTimeout(loadSnapshot, getSnapshotDelay())
+  const delay = getSnapshotDelay()
+  _sleepNextPollAt = Date.now() + delay
+  polling.snapshotTimer = setTimeout(loadSnapshot, delay)
 }
 
 function schedulePortPolling() {
@@ -606,7 +758,7 @@ async function loadSnapshot() {
     // Always update topbar (cheap — 3 text nodes)
     renderTopBar(payload)
 
-    // SleepGuard auto-detect (cheap — 2 invoke calls)
+    // SleepGuard — sync every poll
     if (state.snapshot && window.__TAURI__) {
       const running = state.snapshot.summary.runningAgents
       try {
@@ -615,6 +767,9 @@ async function loadSnapshot() {
           reason: running > 0 ? 'agent_running' : 'idle',
           activeAgents: running,
         })
+      } catch(_) {}
+      // Always update debug UI
+      try {
         const sleepStatus = await invoke('get_sleep_status')
         updateSleepUI(sleepStatus)
       } catch(_) {}
@@ -646,3 +801,4 @@ async function loadSnapshot() {
 
 loadSnapshot()
 initTabs()
+initSleepDebug()
