@@ -180,6 +180,18 @@ fn build_child_session(child: &Session, now: DateTime<Utc>) -> Session {
         })
         .collect();
 
+    // Compute status counts from reclassified agents
+    let mut child_status_counts = crate::types::StatusCounts::default();
+    for agent in &agents {
+        match agent.status {
+            Status::Running => child_status_counts.running += 1,
+            Status::Delayed => child_status_counts.delayed += 1,
+            Status::Stalled => child_status_counts.stalled += 1,
+            Status::Failed => child_status_counts.failed += 1,
+            Status::Completed => child_status_counts.completed += 1,
+        }
+    }
+
     Session {
         id: child.id.clone(),
         name: child.name.clone(),
@@ -188,8 +200,8 @@ fn build_child_session(child: &Session, now: DateTime<Utc>) -> Session {
         started_at: child.started_at.clone(),
         last_activity_at: child.last_activity_at.clone(),
         duration_sec: child.duration_sec,
-        stalled_agent_count: child.stalled_agent_count,
-        status_counts: child.status_counts.clone(),
+        stalled_agent_count: agents.iter().filter(|a| a.is_stalled).count() as i64,
+        status_counts: child_status_counts,
         agents,
         children: child.children.clone(),
     }
@@ -346,7 +358,7 @@ pub fn build_snapshot(
         })
         .collect();
 
-    // Compute summary
+    // Compute summary — include children sessions' agent counts
     let summary = sessions.iter().fold(
         SnapshotSummary {
             running_agents: 0,
@@ -357,6 +369,14 @@ pub fn build_snapshot(
             acc.running_agents += session.status_counts.running;
             acc.suspected_stalled += session.status_counts.stalled;
             acc.total_sessions += 1;
+            // Include children sessions
+            if let Some(ref children) = session.children {
+                for child in children {
+                    acc.running_agents += child.status_counts.running;
+                    acc.suspected_stalled += child.status_counts.stalled;
+                    acc.total_sessions += 1;
+                }
+            }
             acc
         },
     );

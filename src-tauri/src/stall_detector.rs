@@ -48,6 +48,7 @@ pub fn classify_status(
     now: DateTime<Utc>,
 ) -> Status {
     let norm = explicit_status.map(|s| s.to_lowercase());
+    let age_sec = age_sec_from(last_activity_at, Some(now));
 
     match norm.as_deref() {
         Some("failed") | Some("error") => Status::Failed,
@@ -55,14 +56,19 @@ pub fn classify_status(
         Some("completed") | Some("success") | Some("done") => {
             if has_running_tool {
                 Status::Running
+            } else if let Some(age) = age_sec {
+                // Recently active — likely still running between tool calls
+                if age < RUNNING_THRESHOLD_SEC {
+                    Status::Running
+                } else {
+                    Status::Completed
+                }
             } else {
                 Status::Completed
             }
         }
         _ => {
             // No explicit status, classify based on age
-            let age_sec = age_sec_from(last_activity_at, Some(now));
-
             match age_sec {
                 None => {
                     if has_running_tool {
@@ -134,17 +140,17 @@ mod tests {
     #[test]
     fn test_classify_status_explicit_completed() {
         let now = Utc::now();
-        // completed without running tool -> Completed
+        // completed without running tool → Completed
         assert_eq!(
             classify_status(Some("completed"), false, None, now),
             Status::Completed
         );
-        // success without running tool -> Completed
+        // success without running tool → Completed
         assert_eq!(
             classify_status(Some("success"), false, None, now),
             Status::Completed
         );
-        // done without running tool -> Completed
+        // done without running tool → Completed
         assert_eq!(
             classify_status(Some("done"), false, None, now),
             Status::Completed
@@ -153,6 +159,18 @@ mod tests {
         assert_eq!(
             classify_status(Some("completed"), true, None, now),
             Status::Running
+        );
+        // completed + recent activity -> Running (still active between tools)
+        let recent_time = (now - chrono::Duration::seconds(10)).to_rfc3339();
+        assert_eq!(
+            classify_status(Some("completed"), false, Some(&recent_time), now),
+            Status::Running
+        );
+        // completed + old activity -> Completed
+        let old_time = (now - chrono::Duration::seconds(60)).to_rfc3339();
+        assert_eq!(
+            classify_status(Some("completed"), false, Some(&old_time), now),
+            Status::Completed
         );
     }
 

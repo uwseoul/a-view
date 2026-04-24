@@ -456,6 +456,35 @@ pub fn normalize_raw_session(
     let mut agent_buckets: std::collections::HashMap<String, Agent> =
         std::collections::HashMap::new();
 
+    // Track the latest status per agent from parts
+    let mut agent_latest_status: std::collections::HashMap<String, String> =
+        std::collections::HashMap::new();
+
+    // Build message map for part-to-agent resolution (reused later too)
+    let message_data_map: std::collections::HashMap<&str, &str> =
+        messages.iter().map(|m| (m.id.as_str(), m.data.as_str())).collect();
+
+    // Pre-scan parts to determine agent status from their latest tool state
+    for part_row in parts {
+        let part_json = safe_json_parse(&part_row.data)
+            .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
+        let msg_data = message_data_map.get(part_row.message_id.as_str()).copied();
+        let message_json = msg_data
+            .and_then(|data| safe_json_parse(data))
+            .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
+        let agent_name = pick_agent_name(&message_json);
+        let agent_id = format!("{}:{}", raw.id, agent_name);
+
+        if let Some(status) = part_json
+            .get("state")
+            .and_then(|v| v.get("status"))
+            .and_then(|v| v.as_str())
+        {
+            // Parts sorted DESC — first match = newest status, keep it
+            agent_latest_status.entry(agent_id).or_insert(status.to_string());
+        }
+    }
+
     // Process messages to build agents
     let mut sorted_messages = messages.to_vec();
     sorted_messages.sort_by(|a, b| {
@@ -473,6 +502,20 @@ pub fn normalize_raw_session(
 
         let agent_id = format!("{}:{}", raw.id, agent_name);
 
+        // Determine initial status from pre-scanned latest part status
+        let (_initial_status, initial_label) = agent_latest_status
+            .get(&agent_id)
+            .map(|s| {
+                let label = match s.as_str() {
+                    "completed" | "success" | "done" => ("Completed", "Completed"),
+                    "failed" | "error" => ("Failed", "Failed"),
+                    "running" | "pending" => ("Running", "Running"),
+                    _ => ("Running", "Running"),
+                };
+                (label.0.to_string(), label.1.to_string())
+            })
+            .unwrap_or_else(|| ("unknown".to_string(), "unknown".to_string()));
+
         // Ensure agent exists with id set
         if !agent_buckets.contains_key(&agent_id) {
             agent_buckets.insert(
@@ -482,7 +525,7 @@ pub fn normalize_raw_session(
                     name: agent_name.clone(),
                     model: model.clone(),
                     status: Status::Running,
-                    status_label: "Running".to_string(),
+                    status_label: initial_label,
                     task: String::new(),
                     started_at: created_at.clone(),
                     last_activity_at: None,
@@ -540,13 +583,10 @@ pub fn normalize_raw_session(
     }
 
     // Process parts to enrich agents
-    let message_map: std::collections::HashMap<_, _> =
-        messages.iter().map(|m| (m.id.as_str(), &m.data)).collect();
-
     for part_row in parts {
         let part_json = safe_json_parse(&part_row.data)
             .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
-        let message_json = message_map
+        let message_json = message_data_map
             .get(part_row.message_id.as_str())
             .and_then(|data| safe_json_parse(data))
             .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
@@ -557,6 +597,20 @@ pub fn normalize_raw_session(
 
         let agent_id = format!("{}:{}", raw.id, agent_name);
 
+        // Determine initial status from pre-scanned latest part status
+        let (_initial_status, initial_label) = agent_latest_status
+            .get(&agent_id)
+            .map(|s| {
+                let label = match s.as_str() {
+                    "completed" | "success" | "done" => ("Completed", "Completed"),
+                    "failed" | "error" => ("Failed", "Failed"),
+                    "running" | "pending" => ("Running", "Running"),
+                    _ => ("Running", "Running"),
+                };
+                (label.0.to_string(), label.1.to_string())
+            })
+            .unwrap_or_else(|| ("unknown".to_string(), "unknown".to_string()));
+
         // Ensure agent exists
         if !agent_buckets.contains_key(&agent_id) {
             agent_buckets.insert(
@@ -566,7 +620,7 @@ pub fn normalize_raw_session(
                     name: agent_name.clone(),
                     model: model.clone(),
                     status: Status::Running,
-                    status_label: "Running".to_string(),
+                    status_label: initial_label,
                     task: String::new(),
                     started_at: created_at,
                     last_activity_at: None,
