@@ -14,31 +14,32 @@
         <img class="brand__logo" src="icon.png" alt="A-view">
         <div>
           <div class="brand__title">A-view</div>
-          <div class="brand__subtitle">OpenCode Ops Dashboard</div>
+          <div class="brand__subtitle" data-i18n="brandSubtitle">OpenCode Ops Dashboard</div>
         </div>
       </div>
 
       <nav class="tab-nav">
-        <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
-        <button class="tab-btn" data-tab="portkiller">Port Killer</button>
+        <button class="tab-btn active" data-tab="dashboard" data-i18n="tabDashboard">Dashboard</button>
+        <button class="tab-btn" data-tab="portkiller" data-i18n="tabPortKiller">Port Killer</button>
       </nav>
 
       <div class="kpi-row">
         <section class="kpi-card kpi-card--running">
-          <div class="kpi-card__label">Running Agents</div>
+          <div class="kpi-card__label" data-i18n="runningAgents">Running Agents</div>
           <div class="kpi-card__value" id="running-agents">0</div>
         </section>
         <section class="kpi-card kpi-card--stalled">
-          <div class="kpi-card__label">Suspected Stalled</div>
+          <div class="kpi-card__label" data-i18n="suspectedStalled">Suspected Stalled</div>
           <div class="kpi-card__value" id="stalled-agents">0</div>
         </section>
       </div>
 
       <div class="meta-status">
+        <button class="lang-toggle" id="lang-toggle" title="Switch language">한/EN</button>
         <div class="sleep-wrapper">
           <div class="sleep-indicator" id="sleep-indicator" title="Sleep prevention status">
             <span id="sleep-icon">⚪</span>
-            <span id="sleep-label">대기 중</span>
+            <span id="sleep-label" data-i18n-default="sleepSystem">대기 중</span>
           </div>
           <div class="sleep-debug hidden" id="sleep-debug">
             <div class="sleep-debug__header">
@@ -47,42 +48,42 @@
             </div>
             <div class="sleep-debug__body">
               <div class="sleep-debug__row">
-                <span class="sleep-debug__key">상태</span>
+                <span class="sleep-debug__key" data-i18n="sleepStatus">상태</span>
                 <span class="sleep-debug__val" id="dbg-preventing">—</span>
               </div>
               <div class="sleep-debug__row">
-                <span class="sleep-debug__key">모드</span>
+                <span class="sleep-debug__key" data-i18n="sleepMode">모드</span>
                 <span class="sleep-debug__val" id="dbg-mode">—</span>
               </div>
               <div class="sleep-debug__row">
-                <span class="sleep-debug__key">활성 에이전트</span>
+                <span class="sleep-debug__key" data-i18n="sleepActiveAgents">활성 에이전트</span>
                 <span class="sleep-debug__val" id="dbg-agents">—</span>
               </div>
               <div class="sleep-debug__divider"></div>
               <div class="sleep-debug__row">
-                <span class="sleep-debug__key">화면 꺼짐 방지</span>
+                <span class="sleep-debug__key" data-i18n="sleepDisplay">화면 꺼짐 방지</span>
                 <span class="sleep-debug__val" id="dbg-display">—</span>
               </div>
               <div class="sleep-debug__row">
-                <span class="sleep-debug__key">시스템 대기 방지</span>
+                <span class="sleep-debug__key" data-i18n="sleepIdle">시스템 대기 방지</span>
                 <span class="sleep-debug__val" id="dbg-idle">—</span>
               </div>
               <div class="sleep-debug__divider"></div>
               <div class="sleep-debug__row">
-                <span class="sleep-debug__key" id="dbg-time-label">시작 시각</span>
+                <span class="sleep-debug__key" id="dbg-time-label" data-i18n="sleepStartTime">시작 시각</span>
                 <span class="sleep-debug__val" id="dbg-time">—</span>
               </div>
               <div class="sleep-debug__row">
-                <span class="sleep-debug__key" id="dbg-duration-label">유지 시간</span>
+                <span class="sleep-debug__key" id="dbg-duration-label" data-i18n="sleepDuration">유지 시간</span>
                 <span class="sleep-debug__val" id="dbg-duration">—</span>
               </div>
               <div class="sleep-debug__divider"></div>
               <div class="sleep-debug__row sleep-debug__row--countdown">
-                <span class="sleep-debug__key">다음 체크</span>
+                <span class="sleep-debug__key" data-i18n="sleepNextCheck">다음 체크</span>
                 <span class="sleep-debug__val" id="dbg-countdown">—</span>
               </div>
               <div class="sleep-debug__row">
-                <span class="sleep-debug__key">예상</span>
+                <span class="sleep-debug__key" data-i18n="sleepExpect">예상</span>
                 <span class="sleep-debug__val" id="dbg-expect">—</span>
               </div>
               <div class="sleep-debug__divider"></div>
@@ -90,7 +91,7 @@
             </div>
           </div>
         </div>
-        <div class="live"><span class="live__dot"></span><span>Polling every 5s</span></div>
+        <div class="live"><span class="live__dot"></span><span data-i18n="polling" data-i18n-params='{"sec":"5"}'>Polling every 5s</span></div>
         <div id="last-refreshed">--</div>
       </div>
     </header>
@@ -100,7 +101,7 @@
       <aside class="panel panel--projects">
         <div class="panel__header">
           <div>
-            <div class="panel__eyebrow">Projects</div>
+            <div class="panel__eyebrow" data-i18n="projects">Projects</div>
             <div class="panel__title" id="project-count">0 projects</div>
           </div>
         </div>
@@ -113,7 +114,7 @@
 
       <aside class="panel panel--detail" id="detail-panel">
         <div class="panel--detail-scroll">
-          <div class="empty-state">에이전트를 선택하면 상세가 표시됩니다.</div>
+          <div class="empty-state" data-i18n="selectAgent">에이전트를 선택하면 상세가 표시됩니다.</div>
         </div>
       </aside>
     </main>
@@ -121,16 +122,16 @@
 
     <div id="tab-portkiller" class="tab-content hidden">
       <div class="port-header">
-        <input class="port-search" id="port-search" type="text" placeholder="포트 또는 프로세스 검색...">
-        <button class="port-refresh-btn" id="port-refresh">새로고침</button>
+        <input class="port-search" id="port-search" type="text" data-i18n-placeholder="portSearch" placeholder="포트 또는 프로세스 검색...">
+        <button class="port-refresh-btn" id="port-refresh" data-i18n="portRefresh">새로고침</button>
       </div>
       <div class="port-layout">
         <aside class="port-filter">
-          <div class="port-filter__header">분류 필터</div>
+          <div class="port-filter__header" data-i18n="portCategoryFilter">분류 필터</div>
           <label class="port-filter__item port-filter__item--all">
             <input type="checkbox" id="cat-all" data-category="all" checked>
             <span class="port-filter__check"></span>
-            <span class="port-filter__label">전체</span>
+            <span class="port-filter__label" data-i18n="portAll">전체</span>
           </label>
           <label class="port-filter__item">
             <input type="checkbox" data-category="web_server">
@@ -155,7 +156,7 @@
           <label class="port-filter__item">
             <input type="checkbox" data-category="other">
             <span class="port-filter__check"></span>
-            <span class="port-filter__label cat-dot cat-dot--other">기타</span>
+            <span class="port-filter__label cat-dot cat-dot--other" data-i18n="portOther">기타</span>
           </label>
           <div class="port-filter__count" id="port-filter-count"></div>
         </aside>
@@ -164,15 +165,15 @@
             <table class="port-table">
               <thead>
                 <tr>
-                  <th>포트</th>
-                  <th>프로세스</th>
+                  <th data-i18n="portColumnPort">포트</th>
+                  <th data-i18n="portColumnProcess">프로세스</th>
                   <th>PID</th>
-                  <th>분류</th>
-                  <th>동작</th>
+                  <th data-i18n="portColumnCategory">분류</th>
+                  <th data-i18n="portColumnAction">동작</th>
                 </tr>
               </thead>
               <tbody id="port-table-body">
-                <tr><td colspan="5" class="port-empty">포트를 스캔하는 중...</td></tr>
+                <tr><td colspan="5" class="port-empty" data-i18n="portScanning">포트를 스캔하는 중...</td></tr>
               </tbody>
             </table>
           </div>
@@ -181,6 +182,7 @@
     </div>
   </div>
 
+  <script src="i18n.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

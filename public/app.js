@@ -38,13 +38,13 @@ function formatAge(ageSec) {
 
 function relativeTimeKorean(dateStr) {
   const diffSec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-  if (diffSec < 5) return '방금 전'
-  if (diffSec < 60) return `${diffSec}초 전`
+  if (diffSec < 5) return t('justNow')
+  if (diffSec < 60) return `${diffSec}${t('secondsAgo')}`
   const min = Math.floor(diffSec / 60)
-  if (min < 60) return `${min}분 전`
+  if (min < 60) return `${min}${t('minutesAgo')}`
   const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr}시간 전`
-  return `${Math.floor(hr / 24)}일 전`
+  if (hr < 24) return `${hr}${t('hoursAgo')}`
+  return `${Math.floor(hr / 24)}${t('daysAgo')}`
 }
 
 function formatDuration(sec) {
@@ -297,7 +297,7 @@ function renderDetail() {
   const container = document.getElementById('detail-panel')
   const agent = findAgentGlobally(state.selectedAgentId)
   if (!agent) {
-    container.innerHTML = '<div class="panel--detail-scroll"><div class="empty-state">에이전트를 선택하면 상세가 표시됩니다.</div></div>'
+    container.innerHTML = '<div class="panel--detail-scroll"><div class="empty-state">' + t('selectAgent') + '</div></div>'
     return
   }
 
@@ -310,7 +310,7 @@ function renderDetail() {
       </div>
       <div class="log-item__message">${escapeHtml(log.message)}</div>
     </article>
-  `).join('') || '<div class="empty-state">최근 로그가 없습니다.</div>'
+  `).join('') || '<div class="empty-state">' + t('noRecentLogs') + '</div>'
 
   container.innerHTML = `
     <div class="panel--detail-scroll">
@@ -404,10 +404,10 @@ function updateSleepUI(status) {
   if (!icon || !label) return
   if (status.isPreventing) {
     icon.textContent = '🟢'
-    label.textContent = '절전 방지'
+    label.textContent = t('sleepPreventing')
   } else {
     icon.textContent = '⚪'
-    label.textContent = '시스템 설정에 따름'
+    label.textContent = t('sleepSystem')
   }
   updateSleepDebug(status)
 }
@@ -417,9 +417,9 @@ function formatDurationKorean(sec) {
   const h = Math.floor(sec / 3600)
   const m = Math.floor((sec % 3600) / 60)
   const s = Math.floor(sec % 60)
-  if (h > 0) return `${h}시간 ${m}분`
-  if (m > 0) return `${m}분 ${s}초`
-  return `${s}초`
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
 }
 
 function formatTimeShort(isoStr) {
@@ -452,15 +452,15 @@ function updateSleepDebug(status) {
   const agents = status.activeAgents ?? 0
 
   // 상태
-  preventingEl.textContent = active ? '🟢 절전 방지 중' : '⚪ 시스템 설정에 따름'
+  preventingEl.textContent = active ? t('sleepPreventingLabel') : t('sleepSystemLabel')
   preventingEl.style.color = active ? '#4fd1c5' : '#6f7f9b'
 
   // 모드
-  modeEl.textContent = active ? '시스템 설정 무시 · 절전 차단' : 'OS 기본 절전 정책 따름'
+  modeEl.textContent = active ? t('sleepModeActive') : t('sleepModeIdle')
   modeEl.style.color = active ? '#90a0bd' : '#6f7f9b'
 
   // 활성 에이전트
-  agentsEl.textContent = agents > 0 ? `${agents}개` : '0개'
+  agentsEl.textContent = t('portCount', {count: agents})
   agentsEl.style.color = agents > 0 ? '#4fd1c5' : '#6f7f9b'
 
   // display / idle
@@ -471,31 +471,31 @@ function updateSleepDebug(status) {
 
   // 시각 / 유지시간
   if (active && status.startedAt) {
-    timeLabelEl.textContent = '시작 시각'
+    timeLabelEl.textContent = t('sleepStartTime')
     timeEl.textContent = formatTimeShort(status.startedAt)
     const durSec = Math.floor((Date.now() - new Date(status.startedAt).getTime()) / 1000)
-    durationLabelEl.textContent = '유지 시간'
+    durationLabelEl.textContent = t('sleepDuration')
     durationEl.textContent = formatDurationKorean(durSec)
   } else if (!active && status.lastChangedAt) {
-    timeLabelEl.textContent = '해제 시각'
+    timeLabelEl.textContent = t('sleepReleaseTime')
     timeEl.textContent = formatTimeShort(status.lastChangedAt)
     const durSec = Math.floor((Date.now() - new Date(status.lastChangedAt).getTime()) / 1000)
-    durationLabelEl.textContent = '경과 시간'
+    durationLabelEl.textContent = t('sleepElapsed')
     durationEl.textContent = formatDurationKorean(durSec)
   } else {
-    timeLabelEl.textContent = '시각'
+    timeLabelEl.textContent = t('sleepTime')
     timeEl.textContent = '—'
-    durationLabelEl.textContent = '시간'
+    durationLabelEl.textContent = t('sleepTimeLabel')
     durationEl.textContent = '—'
   }
 
   // 예상
-  expectEl.textContent = active ? '수동 끄기 → 시스템 설정에 따름' : '수동 켜기 → 절전 방지'
+  expectEl.textContent = active ? t('sleepExpectOff') : t('sleepExpectOn')
   expectEl.style.color = '#6f7f9b'
 
   // 수동 토글 버튼
   if (toggleBtn) {
-    toggleBtn.textContent = active ? '수동 끄기' : '수동 켜기'
+    toggleBtn.textContent = active ? t('sleepManualOff') : t('sleepManualOn')
     toggleBtn.className = active ? 'sleep-debug__toggle sleep-debug__toggle--off' : 'sleep-debug__toggle sleep-debug__toggle--on'
   }
 }
@@ -509,7 +509,7 @@ function startSleepCountdown() {
     const remaining = Math.max(0, Math.ceil((_sleepNextPollAt - Date.now()) / 1000))
     const panel = document.getElementById('sleep-debug')
     if (!panel || panel.classList.contains('hidden')) return
-    countdownEl.textContent = remaining > 0 ? `${remaining}초 후 상태 확인` : '확인 중...'
+    countdownEl.textContent = remaining > 0 ? t('sleepCountdown', {sec: remaining}) : t('sleepChecking')
     countdownEl.style.color = remaining <= 3 ? '#f6ad55' : '#90a0bd'
   }, 500)
 }
@@ -668,7 +668,7 @@ async function loadPorts() {
     renderPorts()
   } catch(e) {
     const tbody = document.getElementById('port-table-body')
-    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="port-error">포트 스캔 실패: ${escapeHtml(String(e))}</td></tr>`
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="port-error">${t('portScanFail', {error: escapeHtml(String(e))})}</td></tr>`
   } finally {
     isPortLoading = false
   }
@@ -699,11 +699,11 @@ function renderPorts() {
   const countEl = document.getElementById('port-filter-count')
   if (countEl) {
     const total = (state.portData.ports || []).length
-    countEl.textContent = ports.length === total ? `${total}개` : `${ports.length} / ${total}`
+    countEl.textContent = ports.length === total ? t('portCount', {count: total}) : t('portCountFiltered', {filtered: ports.length, total: total})
   }
 
   if (!ports.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="port-empty">열린 포트가 없습니다</td></tr>'
+    tbody.innerHTML = '<tr><td colspan="5" class="port-empty">' + t('portEmpty') + '</td></tr>'
     return
   }
 
@@ -713,13 +713,13 @@ function renderPorts() {
       <td>${escapeHtml(p.processName || '—')}</td>
       <td class="port-pid">${p.pid || '—'}</td>
       <td><span class="category-badge category-badge--${p.category}">${categoryLabel(p.category)}</span></td>
-      <td>${p.pid ? `<button class="kill-btn" onclick="killPort(${p.pid})">종료</button>` : ''}</td>
+      <td>${p.pid ? `<button class="kill-btn" onclick="killPort(${p.pid})">${t('portKill')}</button>` : ''}</td>
     </tr>
   `).join('')
 }
 
 function categoryLabel(cat) {
-  const labels = { web_server: 'Web', database: 'DB', development: 'Dev', system: 'Sys', other: '기타' }
+  const labels = { web_server: 'Web', database: 'DB', development: 'Dev', system: 'Sys', other: t('portOther') }
   return labels[cat] || cat
 }
 
@@ -728,7 +728,7 @@ async function killPort(pid) {
     await invoke('kill_port_process', { pid })
     await loadPorts()
   } catch(e) {
-    alert(`프로세스 종료 실패: ${e}`)
+    alert(t('portKillFail', {error: e}))
   }
 }
 
@@ -798,6 +798,44 @@ async function loadSnapshot() {
     schedulePortPolling()
   }
 }
+
+// ── i18n ──
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n')
+    const params = el.getAttribute('data-i18n-params')
+    if (params) {
+      try {
+        el.textContent = t(key, JSON.parse(params))
+      } catch(_) {
+        el.textContent = t(key)
+      }
+    } else {
+      el.textContent = t(key)
+    }
+  })
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'))
+  })
+  // Update lang attribute
+  document.documentElement.lang = getLang()
+}
+
+function initLangToggle() {
+  const btn = document.getElementById('lang-toggle')
+  if (!btn) return
+  btn.textContent = getLang() === 'ko' ? '한/EN' : 'EN/한'
+  btn.addEventListener('click', () => {
+    toggleLang()
+    btn.textContent = getLang() === 'ko' ? '한/EN' : 'EN/한'
+    applyI18n()
+    // Re-render dynamic content with new language
+    if (state.snapshot) render()
+  })
+}
+
+applyI18n()
+initLangToggle()
 
 loadSnapshot()
 initTabs()
