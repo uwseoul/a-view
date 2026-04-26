@@ -724,11 +724,22 @@ function categoryLabel(cat) {
 }
 
 async function killPort(pid) {
+  const dialog = window.__TAURI__?.dialog
   try {
-    await invoke('kill_port_process', { pid })
+    const result = await invoke('kill_port_process', { pid })
+    if (dialog) {
+      await dialog.message(result.message || t('portKillSuccess', {pid}), { title: t('portKill'), kind: 'info' })
+    } else {
+      alert(result.message || t('portKillSuccess', {pid}))
+    }
     await loadPorts()
   } catch(e) {
-    alert(t('portKillFail', {error: e}))
+    const msg = t('portKillFail', {error: String(e)})
+    if (dialog) {
+      await dialog.message(msg, { title: t('portKill'), kind: 'error' })
+    } else {
+      alert(msg)
+    }
   }
 }
 
